@@ -21,7 +21,7 @@ impl PolicySqlxDatabase {
 
     /// Create a new in-memory database for policies
     pub fn create() -> Arc<Self> {
-        todo!("implement the in-memory version of the policy database")
+        Arc::new(Self::new(Arc::new(SqlxDatabase::in_memory())))
     }
 }
 

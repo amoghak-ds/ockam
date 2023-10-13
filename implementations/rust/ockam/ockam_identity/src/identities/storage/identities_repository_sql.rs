@@ -49,7 +49,7 @@ impl IdentitiesSqlxDatabase {
 
     /// Create a new in-memory database
     pub fn create() -> Arc<Self> {
-        todo!("implement the in-memory identities database")
+        Arc::new(Self::new(Arc::new(SqlxDatabase::in_memory())))
     }
 }
 

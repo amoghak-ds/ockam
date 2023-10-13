@@ -49,6 +49,11 @@ impl EnrollmentsSqlxDatabase {
     pub fn new(database: Arc<SqlxDatabase>) -> Self {
         Self { database }
     }
+
+    /// Create a new in-memory database
+    pub fn create() -> Arc<Self> {
+        Arc::new(Self::new(Arc::new(SqlxDatabase::in_memory())))
+    }
 }
 
 #[async_trait]

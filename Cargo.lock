@@ -4999,6 +4999,7 @@ dependencies = [
  "cfg-if",
  "chrono",
  "delegate",
+ "futures 0.3.28",
  "group",
  "heapless",
  "hex",

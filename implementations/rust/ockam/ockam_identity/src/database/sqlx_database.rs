@@ -44,12 +44,16 @@ impl SqlxDatabase {
     }
 
     /// Constructor for an in-memory database
-    pub async fn in_memory() -> Result<Self> {
-        debug!("create an in memory database");
-        let pool = Self::create_in_memory_connection_pool().await?;
-        let db = SqlxDatabase { pool };
-        db.migrate().await?;
-        Ok(db)
+    pub fn in_memory() -> Self {
+        futures::executor::block_on(async {
+            debug!("create an in memory database");
+            let pool = Self::create_in_memory_connection_pool()
+                .await
+                .expect("creating an in-memory connection should work");
+            let db = SqlxDatabase { pool };
+            db.migrate().await.expect("the migration should work");
+            db
+        })
     }
 
     async fn create_and_migrate(path: &Path) -> Result<Self> {
@@ -72,7 +76,7 @@ impl SqlxDatabase {
     }
 
     async fn create_in_memory_connection_pool() -> Result<SqlitePool> {
-        let pool = SqlitePool::connect("file::memory:")
+        let pool = SqlitePool::connect("sqlite::memory:")
             .await
             .map_err(Self::map_sql_err)?;
         Ok(pool)
@@ -127,8 +131,11 @@ impl<T> ToVoid<T> for core::result::Result<T, sqlx::error::Error> {
 
 #[cfg(test)]
 mod tests {
+    use sqlx::sqlite::SqliteQueryResult;
     use sqlx::FromRow;
     use tempfile::NamedTempFile;
+
+    use crate::database::ToSqlxType;
 
     use super::*;
 
@@ -136,14 +143,13 @@ mod tests {
     /// and that migrations are running ok, at least for one table
     #[tokio::test]
     async fn test_create_identity_table() -> Result<()> {
+        // let db = create_database().await?;
+        // let inserted = insert_identity(&db).await.unwrap();
         let db_file = NamedTempFile::new().unwrap();
         let db = SqlxDatabase::create(db_file.path()).await?;
-        let inserted = sqlx::query("INSERT INTO identity VALUES (?1, ?2)")
-            .bind("Ifa804b7fca12a19eed206ae180b5b576860ae651")
-            .bind("123".as_bytes())
-            .execute(&db.pool)
-            .await
-            .unwrap();
+
+        let inserted = insert_identity(&db).await.unwrap();
+
         assert_eq!(inserted.rows_affected(), 1);
         Ok(())
     }
@@ -153,12 +159,8 @@ mod tests {
     async fn test_query() -> Result<()> {
         let db_file = NamedTempFile::new().unwrap();
         let db = SqlxDatabase::create(db_file.path()).await?;
-        sqlx::query("INSERT INTO identity VALUES (?1, ?2)")
-            .bind("Ifa804b7fca12a19eed206ae180b5b576860ae651")
-            .bind("123".as_bytes())
-            .execute(&db.pool)
-            .await
-            .unwrap();
+
+        insert_identity(&db).await.unwrap();
 
         // successful query
         let result: Option<IdentifierRow> =
@@ -183,6 +185,18 @@ mod tests {
                 .unwrap();
         assert_eq!(result, None);
         Ok(())
+    }
+
+    /// HELPERS
+    async fn insert_identity(db: &SqlxDatabase) -> Result<SqliteQueryResult> {
+        Ok(sqlx::query("INSERT INTO identity VALUES (?1, ?2, ?3, ?4)")
+            .bind("Ifa804b7fca12a19eed206ae180b5b576860ae651")
+            .bind("123".as_bytes())
+            .bind("123".to_sql())
+            .bind(true.to_sql())
+            .execute(&db.pool)
+            .await
+            .into_core()?)
     }
 
     #[derive(FromRow, PartialEq, Eq, Debug)]

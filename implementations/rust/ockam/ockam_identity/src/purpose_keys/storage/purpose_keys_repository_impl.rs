@@ -39,7 +39,7 @@ impl PurposeKeysSqlxDatabase {
 
     /// Create a new in-memory database for purpose keys
     pub fn create() -> Arc<Self> {
-        todo!("implement the in-memory version of the purpose keys database")
+        Arc::new(Self::new(Arc::new(SqlxDatabase::in_memory())))
     }
 }
 

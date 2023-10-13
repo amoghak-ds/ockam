@@ -113,7 +113,7 @@ impl CliState {
                 identity.change_history(),
                 self.get_default_vault().await?.verifying_vault,
             )
-                .await?),
+            .await?),
             None => Err(Self::missing_identifier(name).into()),
         }
     }
