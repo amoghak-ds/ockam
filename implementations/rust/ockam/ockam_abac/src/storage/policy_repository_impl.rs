@@ -4,7 +4,7 @@ use ockam_core::async_trait;
 use ockam_core::compat::sync::Arc;
 use ockam_core::compat::vec::Vec;
 use ockam_core::Result;
-use ockam_identity::database::{FromSqlxError, SqlxDatabase, SqlxType, ToSqlxType};
+use ockam_identity::database::{FromSqlxError, SqlxDatabase, SqlxType, ToSqlxType, ToVoid};
 
 use crate::{Action, Expr, PoliciesRepository, Resource};
 
@@ -48,22 +48,14 @@ impl PoliciesRepository for PolicySqlxDatabase {
             .bind(resource.to_sql())
             .bind(action.to_sql())
             .bind(minicbor::to_vec(expression)?.to_sql());
-        query
-            .execute(&self.database.pool)
-            .await
-            .map(|_| ())
-            .into_core()
+        query.execute(&self.database.pool).await.void()
     }
 
     async fn delete_policy(&self, resource: &Resource, action: &Action) -> Result<()> {
         let query = query("DELETE FROM policy WHERE resource = ? and action = ?")
             .bind(resource.to_sql())
             .bind(action.to_sql());
-        query
-            .execute(&self.database.pool)
-            .await
-            .map(|_| ())
-            .into_core()
+        query.execute(&self.database.pool).await.void()
     }
 
     async fn get_policies_by_resource(&self, resource: &Resource) -> Result<Vec<(Action, Expr)>> {
@@ -95,15 +87,16 @@ pub(crate) struct PolicyRow {
 }
 
 impl PolicyRow {
-    fn resource(&self) -> Resource {
+    #[allow(dead_code)]
+    pub(crate) fn resource(&self) -> Resource {
         Resource::from(self.resource.clone())
     }
 
-    fn action(&self) -> Action {
+    pub(crate) fn action(&self) -> Action {
         Action::from(self.action.clone())
     }
 
-    fn expression(&self) -> Result<Expr> {
+    pub(crate) fn expression(&self) -> Result<Expr> {
         Ok(minicbor::decode(self.expression.as_slice())?)
     }
 }
@@ -118,7 +111,7 @@ mod test {
     use super::*;
 
     #[tokio::test]
-    async fn test_basic_functionality() -> Result<()> {
+    async fn test_repository() -> Result<()> {
         let file = NamedTempFile::new().unwrap();
         let repository = create_repository(file.path()).await?;
 

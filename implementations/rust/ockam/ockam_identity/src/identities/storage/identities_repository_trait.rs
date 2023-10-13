@@ -122,6 +122,12 @@ pub trait IdentitiesReader: Send + Sync + 'static {
     async fn is_default_identity_by_name(&self, name: &str) -> Result<bool>;
 }
 
+/// A named identity associates a name with a persisted identity.
+/// This is a convenience for users since they can refer to an identity by the name "alice"
+/// instead of the identifier "I1234561234561234561234561234561234561234"
+///
+/// Additionally one identity can be marked as being the default identity and taken to
+/// establish a secure channel or create credentials without having to specify it.
 pub struct NamedIdentity {
     identifier: Identifier,
     change_history: ChangeHistory,
@@ -130,6 +136,7 @@ pub struct NamedIdentity {
 }
 
 impl NamedIdentity {
+    /// Create a new named identity
     pub fn new(
         identifier: Identifier,
         change_history: ChangeHistory,
@@ -144,18 +151,22 @@ impl NamedIdentity {
         }
     }
 
+    /// Return the identity identifier
     pub fn identifier(&self) -> Identifier {
         self.identifier.clone()
     }
 
+    /// Return the identity change history
     pub fn change_history(&self) -> ChangeHistory {
         self.change_history.clone()
     }
 
+    /// Return the identity name
     pub fn name(&self) -> String {
         self.name.clone()
     }
 
+    /// Return true if this identity is the default one
     pub fn is_default(&self) -> bool {
         self.is_default
     }

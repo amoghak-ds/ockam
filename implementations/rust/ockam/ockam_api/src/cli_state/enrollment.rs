@@ -132,6 +132,16 @@ impl IdentityEnrollment {
     pub fn identifier(&self) -> Identifier {
         self.identifier.clone()
     }
+
+    #[allow(dead_code)]
+    pub fn name(&self) -> Option<String> {
+        self.name.clone()
+    }
+
+    #[allow(dead_code)]
+    pub fn enrolled_at(&self) -> Option<OffsetDateTime> {
+        self.enrolled_at
+    }
 }
 
 #[derive(FromRow)]

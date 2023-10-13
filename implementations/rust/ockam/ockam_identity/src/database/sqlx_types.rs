@@ -72,7 +72,7 @@ impl Encode<'_, Sqlite> for SqlxType {
 ///```
 ///
 pub trait ToSqlxType {
-    // Return the appropriate sql type
+    /// Return the appropriate sql type
     fn to_sql(&self) -> SqlxType;
 }
 
